@@ -62,34 +62,44 @@ async function loadBookings() {
     
     const data = await response.json();
     
-    // Validate and filter bookings
-    blockedBookings = data.filter(booking => {
+    // Validate and filter bookings - ENHANCED ERROR HANDLING
+    blockedBookings = (Array.isArray(data) ? data : []).filter(booking => {
+      // Skip if not an object
+      if (!booking || typeof booking !== 'object') {
+        return false;
+      }
+      
       // Check if booking has required fields
       if (!booking.resource || !booking.start) {
-        console.warn('Invalid booking (missing fields):', booking);
+        return false;
+      }
+      
+      // Validate resource type
+      if (booking.resource !== 'Function Hall' && booking.resource !== 'Guest House') {
         return false;
       }
       
       // Check if dates are valid
-      const startDate = new Date(booking.start);
-      if (isNaN(startDate.getTime())) {
-        console.warn('Invalid booking (bad start date):', booking);
-        return false;
-      }
-      
-      if (booking.end) {
-        const endDate = new Date(booking.end);
-        if (isNaN(endDate.getTime())) {
-          console.warn('Invalid booking (bad end date):', booking);
+      try {
+        const startDate = new Date(booking.start);
+        if (isNaN(startDate.getTime())) {
           return false;
         }
+        
+        if (booking.end) {
+          const endDate = new Date(booking.end);
+          if (isNaN(endDate.getTime())) {
+            return false;
+          }
+        }
+      } catch (err) {
+        return false;
       }
       
       return true;
     });
     
-    console.log('✅ Blocked bookings loaded:', blockedBookings.length);
-    console.log('Bookings:', blockedBookings);
+    console.log('✅ Valid bookings loaded:', blockedBookings.length);
     
     // Initialize calendar after bookings are loaded
     initCalendar();
@@ -112,16 +122,24 @@ function isOverlapping(start1, end1, start2, end2) {
 // INITIALIZE FLATPICKR CALENDAR
 // ============================================
 function initCalendar() {
-  console.log('📅 Initializing calendar with blocked dates...');
+  console.log('📅 Initializing calendar...');
   
   const resource = resourceSelect.value;
   
   // Destroy existing instances
   if (startDatePicker) {
-    startDatePicker.destroy();
+    try {
+      startDatePicker.destroy();
+    } catch (e) {
+      console.warn('Error destroying start date picker:', e);
+    }
   }
   if (endDatePicker) {
-    endDatePicker.destroy();
+    try {
+      endDatePicker.destroy();
+    } catch (e) {
+      console.warn('Error destroying end date picker:', e);
+    }
   }
   
   // Check if Flatpickr is loaded
@@ -145,18 +163,15 @@ function initCalendar() {
             const dateStr = date.toISOString().split('T')[0];
             
             return blockedBookings.some(booking => {
-              if (booking.resource !== resource) return false;
-              
-              // Validate booking dates
-              if (!booking.start) return false;
-              
               try {
+                if (booking.resource !== resource) return false;
+                if (!booking.start) return false;
+                
                 const bookingStart = new Date(booking.start);
                 const bookingEnd = booking.end ? new Date(booking.end) : bookingStart;
                 
-                // Check if dates are valid
+                // Validate dates
                 if (isNaN(bookingStart.getTime()) || isNaN(bookingEnd.getTime())) {
-                  console.warn('Invalid booking date:', booking);
                   return false;
                 }
                 
@@ -171,14 +186,12 @@ function initCalendar() {
                   return isOverlapping(date, date, bookingStart, bookingEnd);
                 }
               } catch (err) {
-                console.warn('Error processing booking:', booking, err);
                 return false;
               }
               
               return false;
             });
           } catch (err) {
-            console.warn('Error in disable function:', err);
             return false;
           }
         }
@@ -200,13 +213,11 @@ function initCalendar() {
           if (resource !== "Guest House") return false;
           
           try {
-            const dateStr = date.toISOString().split('T')[0];
-            
             return blockedBookings.some(booking => {
-              if (booking.resource !== "Guest House") return false;
-              if (!booking.start) return false;
-              
               try {
+                if (booking.resource !== "Guest House") return false;
+                if (!booking.start) return false;
+                
                 const bookingStart = new Date(booking.start);
                 const bookingEnd = booking.end ? new Date(booking.end) : bookingStart;
                 
@@ -483,30 +494,33 @@ async function submitBooking(event) {
 // SEND WHATSAPP NOTIFICATION
 // ============================================
 function sendWhatsAppNotification(booking) {
-  let whatsappText = `📢 *NEW BOOKING REQUEST*\n\n`;
-  whatsappText += `🏛️ *RESOURCE:* ${booking.resource}\n`;
-  whatsappText += `🎯 *EVENT TYPE:* ${booking.eventType}\n`;
-  whatsappText += `📅 *START DATE:* ${booking.startDate}\n`;
+  let whatsappText = `BOOKING REQUEST\n\n`;
+  whatsappText += `Hello ${booking.name},\n\n`;
+  whatsappText += `Thank you for your booking request.\n\n`;
+  whatsappText += `Venue: ${booking.resource}\n`;
+  whatsappText += `Event Type: ${booking.eventType}\n`;
+  whatsappText += `Date: ${booking.startDate}\n`;
   
   if (booking.endDate && booking.endDate !== booking.startDate) {
-    whatsappText += `📅 *END DATE:* ${booking.endDate}\n`;
+    whatsappText += `Check-out Date: ${booking.endDate}\n`;
   }
   
   if (booking.slot && booking.resource === "Function Hall") {
-    whatsappText += `⏰ *TIME SLOT:* ${booking.slot.replace('_', ' ')}\n`;
+    whatsappText += `Time Slot: ${booking.slot.replace('_', ' ')}\n`;
   }
   
-  whatsappText += `👤 *NAME:* ${booking.name}\n`;
-  whatsappText += `📱 *PHONE:* ${booking.phone}\n`;
-  whatsappText += `👥 *GUESTS:* ${booking.guests}\n`;
+  whatsappText += `Guests: ${booking.guests}\n`;
   
   if (booking.message) {
-    whatsappText += `💬 *MESSAGE:* ${booking.message}\n`;
+    whatsappText += `\nYour Message: ${booking.message}\n`;
   }
   
-  whatsappText += `\n⚠️ *STATUS:* PENDING\n`;
-  whatsappText += `📋 *ACTION:* Review in Google Sheet\n`;
-  whatsappText += `\n_Sent from Banana Mahal Website_`;
+  whatsappText += `\nYour booking is currently under review. We will confirm within 24 hours.\n\n`;
+  whatsappText += `For any assistance or enquiries, please contact:\n`;
+  whatsappText += `9384376599\n\n`;
+  whatsappText += `We look forward to hosting your event.\n\n`;
+  whatsappText += `Warm regards,\n`;
+  whatsappText += `Banana Mahal`;
   
   setTimeout(() => {
     window.open(

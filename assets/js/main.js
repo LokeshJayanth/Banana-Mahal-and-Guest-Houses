@@ -1,3 +1,55 @@
+// Mobile Menu Toggle
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const mobileMenu = document.getElementById('mobileMenu');
+
+if (mobileMenuBtn && mobileMenu) {
+  mobileMenuBtn.addEventListener('click', () => {
+    mobileMenu.classList.toggle('hidden');
+  });
+  
+  // Close mobile menu when clicking on a link
+  const mobileLinks = mobileMenu.querySelectorAll('a');
+  mobileLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      mobileMenu.classList.add('hidden');
+    });
+  });
+}
+
+// Dark Mode Toggle - FIXED & WORKING
+const darkModeToggle = document.getElementById('darkModeToggle');
+
+function toggleDarkMode() {
+  const html = document.documentElement;
+  const currentTheme = html.getAttribute('data-theme');
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  
+  html.setAttribute('data-theme', newTheme);
+  html.classList.toggle('dark');
+  
+  // Update button icon
+  if (darkModeToggle) {
+    darkModeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌓';
+  }
+  
+  // Save preference
+  localStorage.setItem('theme', newTheme);
+}
+
+if (darkModeToggle) {
+  darkModeToggle.addEventListener('click', toggleDarkMode);
+}
+
+// Load Theme Preference
+const savedTheme = localStorage.getItem('theme') || 'light';
+document.documentElement.setAttribute('data-theme', savedTheme);
+if (savedTheme === 'dark') {
+  document.documentElement.classList.add('dark');
+  if (darkModeToggle) {
+    darkModeToggle.textContent = '☀️';
+  }
+}
+
 // Swiper - Testimonials
 new Swiper(".testimonialSwiper", {
   loop: true,
