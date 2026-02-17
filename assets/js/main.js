@@ -25,7 +25,13 @@ function toggleDarkMode() {
   const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
   
   html.setAttribute('data-theme', newTheme);
-  html.classList.toggle('dark');
+  
+  // Toggle dark class for Tailwind
+  if (newTheme === 'dark') {
+    html.classList.add('dark');
+  } else {
+    html.classList.remove('dark');
+  }
   
   // Update button icon
   if (darkModeToggle) {
@@ -34,10 +40,27 @@ function toggleDarkMode() {
   
   // Save preference
   localStorage.setItem('theme', newTheme);
+  
+  console.log('Theme changed to:', newTheme);
 }
 
 if (darkModeToggle) {
-  darkModeToggle.addEventListener('click', toggleDarkMode);
+  // Remove any existing listeners
+  darkModeToggle.onclick = null;
+  
+  // Add click listener
+  darkModeToggle.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleDarkMode();
+  });
+  
+  // Add touch listener for mobile
+  darkModeToggle.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleDarkMode();
+  });
 }
 
 // Load Theme Preference
@@ -47,6 +70,11 @@ if (savedTheme === 'dark') {
   document.documentElement.classList.add('dark');
   if (darkModeToggle) {
     darkModeToggle.textContent = '☀️';
+  }
+} else {
+  document.documentElement.classList.remove('dark');
+  if (darkModeToggle) {
+    darkModeToggle.textContent = '🌓';
   }
 }
 
