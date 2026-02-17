@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" style="background: #ffffff; color: #1f2937;">
 <head>
   <meta charset="UTF-8">
   <title>Book Your Event | Banana Mahal</title>
@@ -120,6 +120,15 @@
     
   </div>
 </div>
+
+<!-- Force Light Mode -->
+<script>
+  // Clear any stored dark mode preference
+  localStorage.removeItem('theme');
+  // Force light mode
+  document.documentElement.removeAttribute('data-theme');
+  document.documentElement.classList.remove('dark');
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="assets/js/booking.js"></script>

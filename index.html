@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" style="background: #ffffff; color: #1f2937;">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 
-<body class="font-[Poppins] bg-gray-50 text-gray-800">
+<body class="font-[Poppins] bg-gray-50 text-gray-800" style="background-color: #f9fafb !important; color: #1f2937 !important;">
 
   <!-- Scroll Progress -->
   <div id="progress-bar"></div>
@@ -363,6 +363,15 @@
   
   <!-- GSAP -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  
+  <!-- Force Light Mode -->
+  <script>
+    // Clear any stored dark mode preference
+    localStorage.removeItem('theme');
+    // Force light mode
+    document.documentElement.removeAttribute('data-theme');
+    document.documentElement.classList.remove('dark');
+  </script>
   
   <script src="assets/js/main.js"></script>
 
